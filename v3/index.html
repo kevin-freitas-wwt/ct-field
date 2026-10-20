@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CT Field</title>
+<meta name="description" content="Creative Technology brand: the ASCII pipeline, alive. Move your cursor, click the field, fall through it one section at a time.">
+<meta property="og:title" content="CT Field · Creative Technology">
+<meta property="og:description" content="The mark is a field. Seven sections of the Creative Technology brand, rendered through the ASCII pipeline in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="../og.png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="900">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="../og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700&family=Roboto+Mono:wght@400;500&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --dormant: #0074E0;
+    --ground: #FFFFFF;
+    --hairline: #D6D3CE;
+    --ink: #14100F;
+    --lit: #FB550E;
+    --lit-press: #C33D04;
+    --muted: #A8A49F;
+    --panel: #EEEDEA;
+    --raised: #F7F6F4;
+    --secondary: #6E6963;
+    --strong: #14100F;
+    --text: #14100F;
+    --ease: cubic-bezier( 0.72, 0, 0.16, 1 );
+    --mono: "Roboto Mono", ui-monospace, Menlo, monospace;
+    --display: "Space Mono", "Roboto Mono", monospace;
+    --heading: Archivo, "Helvetica Neue", Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+    --dormant: #99CFF7;
+    --ground: #14100F;
+    --hairline: #3E3936;
+    --ink: #EEEDEA;
+    --muted: #6E6963;
+    --panel: #1E1917;
+    --raised: #3E3936;
+    --secondary: #A8A49F;
+    --strong: #FFFFFF;
+    --text: #FFFFFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+    background: var( --ground );
+    color: var( --text );
+    font-family: var( --mono );
+    font-size: 13px;
+    height: 100%;
+    line-height: 1.5;
+    overflow: hidden;
+    transition: background 0.6s var( --ease ), color 0.6s var( --ease );
+}
+button { background: none; border: 0; color: inherit; cursor: pointer; font: inherit; }
+
+#view {
+    display: block;
+    height: 100%;
+    inset: 0;
+    position: fixed;
+    width: 100%;
+}
+#vignette {
+    background: radial-gradient( ellipse at center, transparent 64%, color-mix( in srgb, var( --ground ) 85%, transparent ) 100% );
+    inset: 0;
+    pointer-events: none;
+    position: fixed;
+    z-index: 3;
+}
+
+.label {
+    color: var( --lit );
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5em;
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+.label.quiet { color: var( --muted ); }
+.chrome {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    left: 0;
+    padding: 0 80px;
+    position: fixed;
+    right: 0;
+    z-index: 5;
+}
+.chrome.top { top: 56px; }
+.chrome.bottom {
+    border-top: 1px solid var( --hairline );
+    bottom: 0;
+    height: 56px;
+    transition: border-color 0.6s var( --ease );
+}
+.chrome.bottom .label.quiet:first-child::before {
+    background: var( --lit );
+    content: "";
+    display: inline-block;
+    height: 8px;
+    margin-right: 10px;
+    vertical-align: 0;
+    width: 8px;
+}
+#hud { font-variant-numeric: tabular-nums; letter-spacing: 0.25em; }
+#theme { letter-spacing: 0.5em; padding: 6px 0 6px 20px; }
+#theme:hover { color: var( --lit ); }
+
+#nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    left: 32px;
+    position: fixed;
+    top: 50%;
+    transform: translateY( -50% );
+    z-index: 5;
+}
+#nav button {
+    color: var( --muted );
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    padding: 2px 0;
+    text-align: left;
+    transition: color 0.3s;
+    width: 36px;
+}
+#nav button:hover { color: var( --secondary ); }
+#nav button.on { color: var( --lit ); }
+#nav button.on::after { content: " ■"; }
+
+#copy {
+    bottom: 56px;
+    left: 0;
+    pointer-events: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 4;
+}
+.sec {
+    opacity: 0;
+    padding: 0 80px;
+    position: absolute;
+    transition: opacity 0.6s var( --ease );
+    width: 44%;
+}
+.sec.on { opacity: 1; pointer-events: auto; }
+.sec.intro { bottom: 72px; left: 0; width: 56%; }
+.sec.zoom {
+    left: 50%;
+    text-align: center;
+    top: 50%;
+    transform: translate( -50%, -50% );
+    width: min( 760px, 100% );
+}
+.sec.zoom p, .sec.zoom .rows { margin-left: auto; margin-right: auto; }
+.sec.zoom .rows { max-width: 600px; text-align: left; }
+.sec.zoom .row { grid-template-columns: 210px 1fr; }
+.sec h1, .sec h2 {
+    font-family: var( --heading );
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 20px 0 24px;
+    white-space: pre-line;
+}
+.sec h1 { font-size: clamp( 40px, 5.2vw, 82px ); letter-spacing: -0.035em; line-height: 0.94; }
+.sec h2 { font-size: clamp( 30px, 3.8vw, 58px ); line-height: 0.98; }
+.sec p { color: var( --secondary ); max-width: 52ch; }
+.sec p + p { margin-top: 12px; }
+.sec p.lead { color: var( --text ); font-size: 16px; }
+.sec .hint { color: var( --muted ); font-size: 11px; margin-top: 32px; }
+.sec .hint kbd {
+    border: 1px solid var( --hairline );
+    display: inline-block;
+    font: inherit;
+    line-height: 1;
+    padding: 3px 6px;
+}
+.stag {
+    filter: blur( 8px );
+    opacity: 0;
+    transform: translateY( 20px );
+    transition: opacity 0.7s var( --ease ), transform 0.7s var( --ease ), filter 0.7s var( --ease );
+}
+.sec.on .stag {
+    filter: none;
+    opacity: 1;
+    transform: none;
+    transition-delay: calc( 0.9s + var( --i ) * 90ms );
+}
+.sec:not( .on ) .stag { transition-duration: 0.2s; transition-delay: 0s; }
+.rows { border-top: 1px solid var( --hairline ); margin-top: 28px; max-width: 460px; }
+.row {
+    border-bottom: 1px solid var( --hairline );
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 96px 1fr;
+    padding: 9px 0;
+}
+.row b { color: var( --lit ); font-weight: 500; }
+.row b.n { color: var( --text ); }
+.row span { color: var( --secondary ); }
+.row span i {
+    border: 1px solid var( --hairline );
+    display: inline-block;
+    height: 10px;
+    margin: 0 6px 0 0;
+    vertical-align: -1px;
+    width: 10px;
+}
+.row em { color: var( --text ); font-style: normal; }
+.row.ship b.n::after { color: var( --lit ); content: " · shipped"; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; }
+
+#arrows {
+    bottom: 76px;
+    display: flex;
+    gap: 2px;
+    position: fixed;
+    right: 80px;
+    z-index: 6;
+}
+#arrows button {
+    border: 1px solid var( --hairline );
+    color: var( --text );
+    font-size: 14px;
+    height: 36px;
+    transition: border-color 0.3s, color 0.3s;
+    width: 36px;
+}
+#arrows button:hover { border-color: var( --lit ); color: var( --lit ); }
+#arrows button:disabled { color: var( --muted ); cursor: default; }
+#arrows button:disabled:hover { border-color: var( --hairline ); }
+
+#loading {
+    color: var( --muted );
+    inset: 0;
+    letter-spacing: 0.5em;
+    place-items: center;
+    position: fixed;
+    text-transform: uppercase;
+    z-index: 9;
+}
+#loading.show { display: grid; }
+#loading { display: none; }
+
+@media ( max-width: 860px ) {
+    .chrome { padding: 0 24px; }
+    .chrome.top { top: 24px; }
+    #nav, #hud { display: none; }
+    .chrome.top .label.quiet:not( button ) { display: none; }
+    .sec { padding: 0 24px; width: 100%; }
+    .sec.intro { bottom: 110px; width: 100%; }
+    .sec.zoom { bottom: 110px; left: 0; top: auto; transform: none; width: 100%; }
+    .sec h2 { margin: 12px 0 14px; }
+    .rows { display: none; }
+    #arrows { bottom: 72px; right: 24px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="view"></canvas>
+<div id="vignette"></div>
+
+<div class="chrome top">
+    <span class="label">Creative Technology</span>
+    <span>
+        <span id="versions" data-current="v3"></span>
+        <button id="theme" class="label quiet" aria-label="Toggle light and dark">Dark</button>
+    </span>
+</div>
+
+<nav id="nav" aria-label="Sections"></nav>
+
+<div id="copy">
+    <section class="sec intro" data-i="0">
+        <span class="label">00 · The field</span>
+        <h1>The mark is<br>a field.</h1>
+        <p class="lead">Nothing on this page is an image. Every character is resolved from a luminance field by the same five-stage script that makes every CT render, and the field is alive. Move through it. Each section falls into one region of it.</p>
+        <p class="hint"><kbd>→</kbd> or scroll to advance · <kbd>esc</kbd> home · click any word · click anywhere for a ripple</p>
+    </section>
+
+    <section class="sec zoom" data-i="1">
+        <span class="label">01 · The pipeline</span>
+        <h2>How a render is made.</h2>
+        <p>One script, five stages. The same neutral solid is carried through every stage so the effect of each step is visible in isolation.</p>
+        <div class="rows">
+            <div class="row"><b>01 Source</b><span>luminance, no processing</span></div>
+            <div class="row"><b>02 Raster</b><span>supersampled 10× per cell</span></div>
+            <div class="row"><b>03 Field</b><span>blurred · 0.75 × cell</span></div>
+            <div class="row"><b>04 Contour</b><span>sharpened · 0.34 / 0.36</span></div>
+            <div class="row"><b>05 Resolve</b><span>two layers · dormant blue, lit orange</span></div>
+        </div>
+    </section>
+
+    <section class="sec zoom" data-i="2">
+        <span class="label">02 · Interpolation</span>
+        <h2>Fields, not pixels.</h2>
+        <p>Two fields are mixed and a single contour is re-resolved, so the solid deforms. A crossfade would show both shapes at once. At t = 0.50 there is exactly one form on screen and it belongs to neither end.</p>
+        <div class="rows">
+            <div class="row"><b class="n">t = 0.00</b><span>source</span></div>
+            <div class="row"><b class="n">t = 0.50</b><span><em>deformed</em> · one contour, no ghost</span></div>
+            <div class="row"><b class="n">t = 1.00</b><span>target</span></div>
+        </div>
+    </section>
+
+    <section class="sec zoom" data-i="3">
+        <span class="label">03 · Constants</span>
+        <h2>The constant is an asset.</h2>
+        <p>Each value holds everything else fixed. Too little blur and the contour is jagged with no gradient to morph; too much and strokes fuse. The shipped setting is a published style, not a number someone remembers.</p>
+        <div class="rows">
+            <div class="row ship"><b class="n">blur 0.75</b><span>0.0 none · <em>0.75</em> · 1.15 welded</span></div>
+            <div class="row ship"><b class="n">threshold 0.34</b><span>0.18 fat · <em>0.34</em> · 0.52 skeletal</span></div>
+            <div class="row ship"><b class="n">cell 0.62</b><span>leading ÷ size · at 1.00 glyphs shear 1.67×</span></div>
+        </div>
+    </section>
+
+    <section class="sec zoom" data-i="4">
+        <span class="label">04 · Two-tone</span>
+        <h2>The field is never one colour.</h2>
+        <p>A resolved render is split into two layers over the same grid. Cells inside the attention region go to the lit layer; everything else stays dormant. Two layers, not per-character colouring, so there can only ever be one lit region. The rule is enforced by structure, not discipline.</p>
+        <div class="rows">
+            <div class="row"><b class="n">field/dormant</b><span><i style="background:#0074E0"></i><i style="background:#99CFF7"></i>recedes · blue-400 light, blue-100 dark</span></div>
+            <div class="row"><b class="n">field/lit</b><span><i style="background:#FB550E"></i>advances · signal-400 in both modes</span></div>
+        </div>
+    </section>
+
+    <section class="sec zoom" data-i="5">
+        <span class="label">05 · The type family</span>
+        <h2>The alphabet is the same transformation as the mark.</h2>
+        <p>Archivo Bold through the same five stages as any other source, one glyph at a time, against one baseline. Cap height is the size axis: inside a field the font size never changes, so density carries the value. A title face and a mark. Never a reading face.</p>
+        <div class="rows">
+            <div class="row"><b>cap</b><span><em>C</em> · the size axis, set this and nothing else</span></div>
+            <div class="row"><b>x-height</b><span>0.73 C</span></div>
+            <div class="row"><b>ascender</b><span>1.36 C</span></div>
+            <div class="row"><b>descender</b><span>0.36 C</span></div>
+            <div class="row"><b>cell</b><span>0.60 × 0.62 · square on the page</span></div>
+        </div>
+    </section>
+
+    <section class="sec zoom" data-i="6">
+        <span class="label">06 · Tokens</span>
+        <h2>Roles. Aliased, never raw.</h2>
+        <p>Twenty-nine primitives, sixteen semantic roles. Designers apply only the roles. Each role points at a primitive per mode, so Dark is a mode switch rather than a second library. Toggle it in the corner: the whole page restyles.</p>
+        <div class="rows">
+            <div class="row"><b class="n">surface/ground</b><span><i style="background:#FFFFFF"></i>neutral/0 → <i style="background:#14100F"></i>neutral/700</span></div>
+            <div class="row"><b class="n">text/primary</b><span><i style="background:#14100F"></i>neutral/700 → <i style="background:#FFFFFF"></i>neutral/0</span></div>
+            <div class="row"><b class="n">accent/signal</b><span><i style="background:#FB550E"></i>signal/400 · both modes</span></div>
+            <div class="row"><b class="n">field/dormant</b><span><i style="background:#0074E0"></i>field/400 → <i style="background:#99CFF7"></i>field/100</span></div>
+        </div>
+    </section>
+</div>
+
+<div id="arrows">
+    <button id="prev" aria-label="Previous section">←</button>
+    <button id="next" aria-label="Next section">→</button>
+</div>
+
+<div class="chrome bottom">
+    <span class="label quiet">CT Field</span>
+    <span id="hud" class="label quiet"></span>
+    <span id="page" class="label quiet">00 / 06</span>
+</div>
+
+<div id="loading" class="show">Resolving field</div>
+
+<script src="../versions.js"></script>
+<script>
+const COLS = 300;
+const RAMP = " .:-=+*#%@";
+const N = RAMP.length;
+const SS = 6;
+const BLUR = 0.75;
+const THRESH = 0.34;
+const SOFT = 0.36;
+const SCRAMBLE = "#%&*+=/<>[]{}@0123456789?!";
+const RM = matchMedia( "(prefers-reduced-motion: reduce)" ).matches;
+
+const REGIONS = [
+    { word: "CT",    x: 0.655, y: 0.31, cap: 0.30 },
+    { word: "RENDER", x: 0.05, y: 0.11, cap: 0.09 },
+    { word: "FIELD", x: 0.37, y: 0.07, cap: 0.075 },
+    { word: "0.75",  x: 0.06, y: 0.27, cap: 0.08 },
+    { word: "LIT",   x: 0.30, y: 0.28, cap: 0.10 },
+    { word: "ASCII", x: 0.42, y: 0.52, cap: 0.10 },
+    { word: "TOKEN", x: 0.42, y: 0.80, cap: 0.08 }
+];
+
+const canvas = document.getElementById( "view" );
+const ctx = canvas.getContext( "2d" );
+const nav = document.getElementById( "nav" );
+const page = document.getElementById( "page" );
+const hud = document.getElementById( "hud" );
+const secs = [ ...document.querySelectorAll( ".sec" ) ];
+const prevBtn = document.getElementById( "prev" );
+const nextBtn = document.getElementById( "next" );
+
+let W, H, DPR, ROWS, cw, ch, base, regOf;
+let current = 0, busy = false, hovered = -1, running = false;
+let cam = { cx: 0, cy: 0, s: 1, rot: 0 }, anim = null;
+let zf = 0, lensK = 0, last = 0, hudAt = 0, themeDirty = true, reveal = null;
+const lw = REGIONS.map( function() { return 0; } );
+const hw = REGIONS.map( function() { return 0; } );
+const mouse = { x: 0, y: 0, inside: false };
+const par = { x: 0, y: 0 };
+const ripples = [];
+const decoders = [];
+const atlas = { key: -1, gw: 0, gh: 0, blue: null, orange: null };
+
+function clamp( v, a, b ) {
+    return Math.max( a, Math.min( b, v ) );
+}
+
+function smooth( e0, e1, x ) {
+    const t = clamp( ( x - e0 ) / ( e1 - e0 ), 0, 1 );
+    return t * t * ( 3 - 2 * t );
+}
+
+function lerp( a, b, t ) {
+    return a + ( b - a ) * t;
+}
+
+function hash( a, b, c ) {
+    let h = ( a * 374761393 + b * 668265263 + c * 2147483647 ) | 0;
+    h = ( h ^ ( h >>> 13 ) ) * 1274126177;
+    return ( h ^ ( h >>> 16 ) ) >>> 0;
+}
+
+function measure() {
+    W = innerWidth;
+    H = innerHeight;
+    DPR = Math.min( devicePixelRatio || 1, 2 );
+    canvas.width = Math.round( W * DPR );
+    canvas.height = Math.round( H * DPR );
+    cw = W / COLS;
+    ch = cw * 0.62 / 0.6;
+    ROWS = Math.floor( H / ch );
+}
+
+function drawSource( sx, w, h ) {
+    sx.fillStyle = "#000";
+    sx.fillRect( 0, 0, w, h );
+    sx.fillStyle = "#fff";
+    sx.textBaseline = "alphabetic";
+    const ref = Math.min( h, w * 0.5625 );
+    REGIONS.forEach( function( r ) {
+        const cap = r.cap * ref;
+        const px = cap / 0.71;
+        sx.font = "700 " + px + "px Archivo, Arial, sans-serif";
+        const x = r.x * w, y = r.y * h + cap;
+        const tw = sx.measureText( r.word ).width;
+        sx.fillText( r.word, x, y );
+        r.box = {
+            c0: Math.floor( x / SS ) - 2,
+            r0: Math.floor( ( y - cap ) / SS ) - 2,
+            c1: Math.ceil( ( x + tw ) / SS ) + 2,
+            r1: Math.ceil( y / SS ) + 2
+        };
+    } );
+    sx.lineCap = "round";
+    sx.lineWidth = ref * 0.035;
+    sx.strokeStyle = "#fff";
+    sx.beginPath();
+    sx.moveTo( w * 0.72, h * 0.13 );
+    sx.lineTo( w * 0.93, h * 0.24 );
+    sx.stroke();
+    sx.lineWidth = ref * 0.022;
+    sx.beginPath();
+    sx.arc( w * 0.80, h * 0.83, ref * 0.06, 0, Math.PI * 2 );
+    sx.stroke();
+    sx.fillRect( w * 0.34, h * 0.45, ref * 0.045, ref * 0.045 );
+}
+
+function buildField() {
+    const w = COLS * SS, h = ROWS * SS;
+    const src = document.createElement( "canvas" );
+    src.width = w;
+    src.height = h;
+    drawSource( src.getContext( "2d" ), w, h );
+
+    const fld = document.createElement( "canvas" );
+    fld.width = w;
+    fld.height = h;
+    const fx = fld.getContext( "2d", { willReadFrequently: true } );
+    fx.fillStyle = "#000";
+    fx.fillRect( 0, 0, w, h );
+    fx.filter = "blur(" + ( BLUR * SS ) + "px)";
+    fx.drawImage( src, 0, 0 );
+    const d = fx.getImageData( 0, 0, w, h ).data;
+
+    base = new Float32Array( ROWS * COLS );
+    regOf = new Int8Array( ROWS * COLS ).fill( -1 );
+    const half = Math.floor( SS / 2 );
+    for ( let r = 0; r < ROWS; r++ ) {
+        for ( let c = 0; c < COLS; c++ ) {
+            const i = ( ( r * SS + half ) * w + c * SS + half ) * 4;
+            base[ r * COLS + c ] = smooth( THRESH - SOFT / 2, THRESH + SOFT / 2, d[ i ] / 255 );
+        }
+    }
+    REGIONS.forEach( function( reg, k ) {
+        const b = reg.box;
+        for ( let r = Math.max( 0, b.r0 ); r <= Math.min( ROWS - 1, b.r1 ); r++ ) {
+            for ( let c = Math.max( 0, b.c0 ); c <= Math.min( COLS - 1, b.c1 ); c++ ) regOf[ r * COLS + c ] = k;
+        }
+    } );
+}
+
+function ensureAtlas() {
+    const px = Math.max( 2, cw * cam.s * DPR );
+    const key = Math.round( Math.log2( px ) * 8 );
+    if ( key === atlas.key && !themeDirty ) return;
+    atlas.key = key;
+    themeDirty = false;
+    const gw = clamp( Math.round( Math.pow( 2, key / 8 ) ), 2, 192 );
+    const gh = Math.round( gw * 0.62 / 0.6 );
+    const fs = gw / 0.6;
+    const css = getComputedStyle( document.documentElement );
+    [ [ "blue", "--dormant" ], [ "orange", "--lit" ] ].forEach( function( pair ) {
+        const cv = document.createElement( "canvas" );
+        cv.width = gw * N;
+        cv.height = gh;
+        const g = cv.getContext( "2d" );
+        g.font = "400 " + fs + "px 'Roboto Mono', ui-monospace, Menlo, monospace";
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillStyle = css.getPropertyValue( pair[ 1 ] ).trim();
+        for ( let k = 1; k < N; k++ ) g.fillText( RAMP[ k ], k * gw + gw / 2, gh / 2 + fs * 0.04 );
+        atlas[ pair[ 0 ] ] = cv;
+    } );
+    atlas.gw = gw;
+    atlas.gh = gh;
+}
+
+function targetFor( i ) {
+    if ( i === 0 ) return { cx: W / 2, cy: H / 2, s: 1 };
+    const b = REGIONS[ i ].box;
+    const bw = ( b.c1 - b.c0 + 1 ) * cw, bh = ( b.r1 - b.r0 + 1 ) * ch;
+    const bx = ( b.c0 + b.c1 + 1 ) / 2 * cw, by = ( b.r0 + b.r1 + 1 ) / 2 * ch;
+    const narrow = W < 860;
+    const s = clamp( narrow ? Math.min( W * 0.92 / bw, H * 0.42 / bh ) : Math.min( W * 0.82 / bw, H * 0.55 / bh ), 1.5, 60 );
+    const sy = narrow ? 0.32 : 0.45;
+    return { cx: bx, cy: by + H * ( 0.5 - sy ) / s, s: s };
+}
+
+function flyTo( tgt, instant ) {
+    if ( instant ) {
+        cam = { cx: tgt.cx, cy: tgt.cy, s: tgt.s, rot: 0 };
+        anim = null;
+        return;
+    }
+    anim = {
+        from: { cx: cam.cx, cy: cam.cy, s: cam.s },
+        to: tgt,
+        t0: performance.now(),
+        dur: RM ? 500 : 1600,
+        tilt: RM ? 0 : ( Math.random() < 0.5 ? -1 : 1 ) * 0.05
+    };
+}
+
+function updateCamera( now ) {
+    if ( !anim ) return;
+    const p = clamp( ( now - anim.t0 ) / anim.dur, 0, 1 );
+    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow( -2 * p + 2, 3 ) / 2;
+    const f = anim.from, t = anim.to;
+    const s = Math.exp( lerp( Math.log( f.s ), Math.log( t.s ), e ) );
+    const u = Math.abs( t.s - f.s ) < 1e-6 ? e : ( 1 / s - 1 / f.s ) / ( 1 / t.s - 1 / f.s );
+    cam.s = s;
+    cam.cx = lerp( f.cx, t.cx, u );
+    cam.cy = lerp( f.cy, t.cy, u );
+    cam.rot = anim.tilt * Math.sin( Math.PI * p );
+    if ( p >= 1 ) { anim = null; cam.rot = 0; }
+}
+
+function screenToCell( sx, sy ) {
+    const vx = sx - W / 2, vy = sy - H / 2;
+    const cs = Math.cos( cam.rot ), sn = Math.sin( cam.rot );
+    const wx = ( vx * cs + vy * sn ) / cam.s + cam.cx;
+    const wy = ( -vx * sn + vy * cs ) / cam.s + cam.cy;
+    return { c: wx / cw, r: wy / ch };
+}
+
+function addRipple( c, r, speed, width, strength, life, scr ) {
+    ripples.push( { c: c, r: r, t0: performance.now() / 1000, speed: speed, w: width, str: strength, life: life, scr: scr && !RM } );
+}
+
+function regionAt( c, r ) {
+    return REGIONS.findIndex( function( reg ) {
+        const b = reg.box;
+        return c >= b.c0 - 1 && c <= b.c1 + 1 && r >= b.r0 - 1 && r <= b.r1 + 1;
+    } );
+}
+
+function draw( now, dt, t ) {
+    const vel = anim ? Math.abs( Math.log( cam.s / ( cam.prevS || cam.s ) ) ) / Math.max( dt, 0.001 ) : 0;
+    cam.prevS = cam.s;
+    const trail = RM ? 1 : 1 - clamp( vel * 0.16, 0, 0.78 );
+
+    ctx.setTransform( 1, 0, 0, 1, 0, 0 );
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.globalAlpha = trail;
+    ctx.fillStyle = "#000";
+    ctx.fillRect( 0, 0, canvas.width, canvas.height );
+    ctx.globalCompositeOperation = "source-over";
+
+    ensureAtlas();
+    const rot = cam.rot + ( RM ? 0 : ( mouse.x - W / 2 ) / W * 0.012 );
+    ctx.setTransform( DPR, 0, 0, DPR, 0, 0 );
+    ctx.translate( W / 2, H / 2 );
+    ctx.rotate( rot );
+    ctx.scale( cam.s, cam.s );
+    ctx.translate( -cam.cx, -cam.cy );
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const cs = Math.cos( rot ), sn = Math.sin( rot );
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    [ [ 0, 0 ], [ W, 0 ], [ 0, H ], [ W, H ] ].forEach( function( p ) {
+        const vx = p[ 0 ] - W / 2, vy = p[ 1 ] - H / 2;
+        const x = ( vx * cs + vy * sn ) / cam.s + cam.cx;
+        const y = ( -vx * sn + vy * cs ) / cam.s + cam.cy;
+        minx = Math.min( minx, x ); maxx = Math.max( maxx, x );
+        miny = Math.min( miny, y ); maxy = Math.max( maxy, y );
+    } );
+    const c0 = Math.max( 0, Math.floor( minx / cw ) - 1 ), c1 = Math.min( COLS - 1, Math.ceil( maxx / cw ) + 1 );
+    const r0 = Math.max( 0, Math.floor( miny / ch ) - 1 ), r1 = Math.min( ROWS - 1, Math.ceil( maxy / ch ) + 1 );
+
+    const aspect = ch / cw;
+    const lens = screenToCell( mouse.x, mouse.y );
+    const lensR = 120 / ( cw * cam.s );
+    const lensSig = lensR * lensR, lensCut = lensSig * 6;
+    const pdx = par.x / cam.s, pdy = par.y / cam.s;
+    const dormA = lerp( 0.75, 0.05, zf );
+    const orBase = lerp( 1, 0.2, zf );
+    const orWave = 0.06 * zf;
+    const sweepX = ( t * 34 ) % ( COLS + 140 ) - 70;
+    const ct = REGIONS[ 0 ].box;
+    const ctC = ( ct.c0 + ct.c1 ) / 2, ctR = ( ct.r0 + ct.r1 ) / 2;
+    const revealR = reveal ? ( t - reveal.t0 ) * 85 : 0;
+    const rp = ripples.map( function( q ) {
+        const age = t - q.t0;
+        const R = age * q.speed;
+        const lo = Math.max( 0, R - q.w * 3 ), hi = R + q.w * 3;
+        return { c: q.c, r: q.r, R: R, w: q.w, a: q.str * ( 1 - age / q.life ), scr: q.scr, lo2: lo * lo, hi2: hi * hi, dy2: 0 };
+    } );
+    const gw = atlas.gw, gh = atlas.gh;
+    const lensOn = lensK > 0.01;
+    const revealEdge2 = ( revealR - 6 ) * ( revealR - 6 ), reveal2 = revealR * revealR;
+
+    for ( let r = r0; r <= r1; r++ ) {
+        const y = r * ch;
+        const lensDy = ( r - lens.r ) * aspect, lensDy2 = lensDy * lensDy;
+        const revDy = ( r - ctR ) * aspect, revDy2 = revDy * revDy;
+        for ( let q = 0; q < rp.length; q++ ) {
+            const dy = ( r - rp[ q ].r ) * aspect;
+            rp[ q ].dy2 = dy * dy;
+        }
+        for ( let c = c0; c <= c1; c++ ) {
+            const i = r * COLS + c;
+            let v = base[ i ];
+            let e = 0, scr = false;
+
+            if ( reveal ) {
+                const dx = c - ctC;
+                const d2 = dx * dx + revDy2;
+                if ( d2 > reveal2 ) continue;
+                if ( d2 > revealEdge2 ) { scr = true; e = 0.6; }
+            }
+            if ( lensOn ) {
+                const dx = c - lens.c;
+                const d2 = dx * dx + lensDy2;
+                if ( d2 < lensCut ) e = Math.max( e, Math.exp( -d2 / lensSig ) * lensK );
+            }
+            for ( let q = 0; q < rp.length; q++ ) {
+                const o = rp[ q ];
+                const dx = c - o.c;
+                const d2 = dx * dx + o.dy2;
+                if ( d2 < o.lo2 || d2 > o.hi2 ) continue;
+                const d = Math.sqrt( d2 ) - o.R;
+                const ring = Math.exp( -( d * d ) / ( o.w * o.w ) ) * o.a;
+                if ( ring > e ) e = ring;
+                if ( o.scr && ring > 0.3 ) scr = true;
+            }
+            if ( v < 0.004 && e < 0.01 && !scr ) continue;
+            const k = regOf[ i ];
+            let sw = 0;
+            if ( !RM && zf < 0.5 && v > 0.05 ) {
+                const dsw = ( c - sweepX - r * 0.2 ) / 7;
+                if ( dsw > -3 && dsw < 3 ) sw = Math.exp( -dsw * dsw ) * 0.5;
+            }
+
+            if ( !RM ) v *= 1 + 0.1 * Math.sin( t * 2.1 + c * 0.21 + r * 0.17 );
+            v += e * 0.6;
+            let idx;
+            if ( scr ) {
+                idx = 1 + hash( c, r, Math.floor( t * 16 ) ) % ( N - 1 );
+            } else {
+                idx = Math.round( Math.min( v, 1 ) * ( N - 1 ) );
+            }
+            if ( idx <= 0 ) continue;
+
+            let L = k >= 0 ? Math.max( lw[ k ], hw[ k ] ) : 0;
+            if ( e > 0.25 ) L = Math.max( L, Math.min( 1, ( e - 0.25 ) * 2 ) );
+            if ( scr ) L = Math.max( L, 0.8 );
+            const orA = Math.min( 1, Math.max( orBase + orWave * Math.sin( t * 1.4 + c * 0.05 ), e * 1.1, sw ) );
+            const blA = Math.min( 1, Math.max( dormA, e * 0.9, sw * 0.9 ) );
+            const po = L > 0.5 ? 1 : 0.4;
+            const x = c * cw + pdx * po, yy = y + pdy * po;
+
+            if ( L < 0.98 ) {
+                ctx.globalAlpha = blA * ( 1 - L );
+                ctx.drawImage( atlas.blue, idx * gw, 0, gw, gh, x, yy, cw, ch );
+            }
+            if ( L > 0.02 ) {
+                ctx.globalAlpha = orA * L;
+                ctx.drawImage( atlas.orange, idx * gw, 0, gw, gh, x, yy, cw, ch );
+            }
+        }
+    }
+    ctx.globalAlpha = 1;
+}
+
+function decodeHeading( sec ) {
+    const el = sec.querySelector( "h1, h2" );
+    if ( !el ) return;
+    if ( !el.dataset.text ) el.dataset.text = el.innerText;
+    const text = el.dataset.text;
+    for ( let k = decoders.length - 1; k >= 0; k-- ) if ( decoders[ k ].el === el ) decoders.splice( k, 1 );
+    if ( RM ) { el.textContent = text; return; }
+    const starts = [ ...text ].map( function( _, i ) { return 0.6 + i * 0.03 + Math.random() * 0.25; } );
+    decoders.push( { el: el, text: text, t0: performance.now(), starts: starts } );
+}
+
+function updateDecoders( now ) {
+    for ( let k = decoders.length - 1; k >= 0; k-- ) {
+        const d = decoders[ k ];
+        const el = ( now - d.t0 ) / 1000;
+        let out = "", done = true;
+        for ( let i = 0; i < d.text.length; i++ ) {
+            const ch = d.text[ i ];
+            if ( ch === " " || ch === "\n" || el >= d.starts[ i ] ) out += ch;
+            else {
+                done = false;
+                out += SCRAMBLE[ hash( i, k, Math.floor( now / 55 ) ) % SCRAMBLE.length ];
+            }
+        }
+        d.el.textContent = out;
+        if ( done ) { d.el.textContent = d.text; decoders.splice( k, 1 ); }
+    }
+}
+
+function frame( now ) {
+    requestAnimationFrame( frame );
+    if ( !running ) return;
+    const dt = Math.min( 0.05, ( now - last ) / 1000 );
+    last = now;
+    const t = now / 1000;
+
+    updateCamera( now );
+    zf += ( ( current > 0 ? 1 : 0 ) - zf ) * ( 1 - Math.exp( -dt * 3.2 ) );
+    lensK += ( ( mouse.inside ? 1 : 0 ) - lensK ) * ( 1 - Math.exp( -dt * 6 ) );
+    const pk = 1 - Math.exp( -dt * 5 );
+    const px = RM || !mouse.inside ? 0 : -( mouse.x / W - 0.5 ) * 24;
+    const py = RM || !mouse.inside ? 0 : -( mouse.y / H - 0.5 ) * 24;
+    par.x += ( px - par.x ) * pk;
+    par.y += ( py - par.y ) * pk;
+    for ( let k = 0; k < REGIONS.length; k++ ) {
+        lw[ k ] += ( ( k === current ? 1 : 0 ) - lw[ k ] ) * ( 1 - Math.exp( -dt * 5 ) );
+        hw[ k ] += ( ( k === hovered ? 0.85 : 0 ) - hw[ k ] ) * ( 1 - Math.exp( -dt * 12 ) );
+    }
+    for ( let k = ripples.length - 1; k >= 0; k-- ) if ( t - ripples[ k ].t0 > ripples[ k ].life ) ripples.splice( k, 1 );
+    if ( reveal && ( t - reveal.t0 ) * 85 > COLS * 1.3 ) reveal = null;
+
+    draw( now, dt, t );
+    updateDecoders( now );
+
+    if ( now - hudAt > 90 && mouse.inside && W >= 860 ) {
+        hudAt = now;
+        const p = screenToCell( mouse.x, mouse.y );
+        const c = Math.floor( p.c ), r = Math.floor( p.r );
+        if ( c >= 0 && c < COLS && r >= 0 && r < ROWS ) {
+            const v = base[ r * COLS + c ];
+            hud.textContent = "R" + String( r ).padStart( 3, "0" ) + " C" + String( c ).padStart( 3, "0" ) + " · v " + v.toFixed( 2 ) + " · " + RAMP[ Math.round( v * ( N - 1 ) ) ].replace( " ", "·" );
+        }
+    }
+}
+
+function go( i, instant ) {
+    i = clamp( i, 0, REGIONS.length - 1 );
+    current = i;
+    flyTo( targetFor( i ), instant );
+    if ( !instant ) {
+        const b = REGIONS[ i ].box;
+        addRipple( ( b.c0 + b.c1 ) / 2, ( b.r0 + b.r1 ) / 2, 160, 6, 1, 1.7, true );
+    }
+    secs.forEach( function( s ) {
+        const on = +s.dataset.i === i;
+        s.classList.toggle( "on", on );
+        if ( on ) decodeHeading( s );
+    } );
+    [ ...nav.children ].forEach( function( btn, k ) { btn.classList.toggle( "on", k === i ); } );
+    page.textContent = String( i ).padStart( 2, "0" ) + " / " + String( REGIONS.length - 1 ).padStart( 2, "0" );
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === REGIONS.length - 1;
+    history.replaceState( null, "", "#" + i );
+}
+
+function jump( i ) {
+    if ( busy ) return;
+    busy = true;
+    go( i );
+    setTimeout( function() { busy = false; }, 1200 );
+}
+
+function step( dir ) {
+    const n = current + dir;
+    if ( n < 0 || n >= REGIONS.length ) return;
+    jump( n );
+}
+
+function buildNav() {
+    nav.innerHTML = "";
+    REGIONS.forEach( function( r, k ) {
+        const b = document.createElement( "button" );
+        b.textContent = String( k ).padStart( 2, "0" );
+        b.addEventListener( "click", function() { jump( k ); } );
+        nav.appendChild( b );
+    } );
+}
+
+function stagger() {
+    secs.forEach( function( s ) {
+        [ ...s.querySelectorAll( ".label, p, .row" ) ].forEach( function( el, n ) {
+            el.classList.add( "stag" );
+            el.style.setProperty( "--i", n );
+        } );
+    } );
+}
+
+function setTheme( dark ) {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    document.getElementById( "theme" ).textContent = dark ? "Light" : "Dark";
+    themeDirty = true;
+    try { localStorage.setItem( "ct-theme", dark ? "dark" : "light" ); } catch ( e ) {}
+}
+
+function init() {
+    measure();
+    buildField();
+    buildNav();
+    stagger();
+    const start = clamp( parseInt( location.hash.slice( 1 ), 10 ) || 0, 0, REGIONS.length - 1 );
+    go( start, true );
+    mouse.x = W / 2;
+    mouse.y = H / 2;
+    if ( !RM ) reveal = { t0: performance.now() / 1000 };
+    document.getElementById( "loading" ).classList.remove( "show" );
+    running = true;
+}
+
+document.getElementById( "theme" ).addEventListener( "click", function() {
+    setTheme( document.documentElement.dataset.theme !== "dark" );
+} );
+prevBtn.addEventListener( "click", function() { step( -1 ); } );
+nextBtn.addEventListener( "click", function() { step( 1 ); } );
+
+addEventListener( "pointermove", function( e ) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    mouse.inside = true;
+    if ( !running ) return;
+    const over = e.target.closest && e.target.closest( ".sec, .chrome, #nav, #arrows" );
+    if ( current === 0 && !over ) {
+        const p = screenToCell( e.clientX, e.clientY );
+        const k = regionAt( p.c, p.r );
+        hovered = k > 0 ? k : -1;
+    } else hovered = -1;
+    document.body.style.cursor = !over && ( current !== 0 || hovered > 0 ) ? "pointer" : "";
+} );
+document.addEventListener( "pointerleave", function() { mouse.inside = false; hovered = -1; } );
+
+addEventListener( "click", function( e ) {
+    if ( !running || e.target.closest( "button, a, .sec, #versions, #nav, #arrows, .chrome" ) ) return;
+    const p = screenToCell( e.clientX, e.clientY );
+    addRipple( p.c, p.r, 75, 3.5, 0.95, 1.4, false );
+    if ( current !== 0 ) { jump( 0 ); return; }
+    const k = regionAt( p.c, p.r );
+    if ( k > 0 ) jump( k );
+} );
+
+addEventListener( "keydown", function( e ) {
+    if ( [ "ArrowRight", "ArrowDown", "PageDown", " " ].includes( e.key ) ) { e.preventDefault(); step( 1 ); }
+    else if ( [ "ArrowLeft", "ArrowUp", "PageUp" ].includes( e.key ) ) { e.preventDefault(); step( -1 ); }
+    else if ( e.key === "Home" || e.key === "Escape" ) jump( 0 );
+    else if ( e.key === "End" ) jump( REGIONS.length - 1 );
+    else if ( /^[0-6]$/.test( e.key ) ) jump( +e.key );
+} );
+
+let wheelAcc = 0;
+addEventListener( "wheel", function( e ) {
+    e.preventDefault();
+    if ( busy ) { wheelAcc = 0; return; }
+    wheelAcc += e.deltaY;
+    if ( Math.abs( wheelAcc ) > 60 ) { step( wheelAcc > 0 ? 1 : -1 ); wheelAcc = 0; }
+}, { passive: false } );
+
+let touchY = null;
+addEventListener( "touchstart", function( e ) { touchY = e.touches[ 0 ].clientY; }, { passive: true } );
+addEventListener( "touchend", function( e ) {
+    if ( touchY === null ) return;
+    const dy = touchY - e.changedTouches[ 0 ].clientY;
+    if ( Math.abs( dy ) > 40 ) step( dy > 0 ? 1 : -1 );
+    touchY = null;
+} );
+
+let resizeT;
+addEventListener( "resize", function() {
+    clearTimeout( resizeT );
+    resizeT = setTimeout( function() {
+        if ( !innerWidth || !innerHeight ) return;
+        measure();
+        buildField();
+        ripples.length = 0;
+        flyTo( targetFor( current ), true );
+        atlas.key = -1;
+    }, 200 );
+} );
+
+( function() {
+    let dark = true;
+    try { dark = ( localStorage.getItem( "ct-theme" ) || "dark" ) === "dark"; } catch ( e ) {}
+    setTheme( dark );
+} )();
+
+requestAnimationFrame( frame );
+
+const ready = document.fonts
+    ? Promise.race( [
+        Promise.all( [ document.fonts.load( "700 100px Archivo" ), document.fonts.load( "400 13px 'Roboto Mono'" ) ] ),
+        new Promise( function( res ) { setTimeout( res, 3000 ); } )
+    ] )
+    : Promise.resolve();
+ready.then( function() {
+    if ( innerWidth && innerHeight ) init();
+    else addEventListener( "resize", function once() { removeEventListener( "resize", once ); init(); } );
+} );
+</script>
+</body>
+</html>
