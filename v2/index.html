@@ -175,18 +175,23 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
 .sec.on { opacity: 1; pointer-events: auto; transform: none; transition-delay: 0.45s; }
 .sec.intro { bottom: 72px; left: 0; width: 56%; }
 .sec.zoom {
-    left: 50%;
-    text-align: center;
-    top: 50%;
-    transform: translate( -50%, calc( -50% + 14px ) );
-    width: min( 760px, 100% );
+    align-items: center;
+    bottom: 0;
+    column-gap: 64px;
+    display: grid;
+    grid-template-columns: minmax( 0, 1fr ) minmax( 0, 40% );
+    left: 0;
+    pointer-events: none;
+    top: 0;
+    width: 100%;
 }
-.sec.zoom.on { transform: translate( -50%, -50% ); }
-.sec.zoom p, .sec.zoom .rows { margin-left: auto; margin-right: auto; }
-.sec.zoom .rows { max-width: 600px; text-align: left; }
-.sec.zoom .row { grid-template-columns: 210px 1fr; }
+.sec.zoom.on { pointer-events: none; }
+.sec.zoom.on > * { pointer-events: auto; }
+.sec.zoom .head { padding-right: 24px; }
+.sec.zoom .rows { margin-top: 28px; max-width: none; }
+.sec.zoom .row { grid-template-columns: 130px 1fr; }
+.sec.zoom h2 { font-size: clamp( 34px, 4.6vw, 76px ); }
 .sec.zoom h2 {
-    font-size: clamp( 30px, 3.8vw, 58px );
     line-height: 0.98;
     opacity: 0;
     transition: opacity 1.2s var( --ease );
@@ -273,8 +278,8 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
     .chrome.top .label.quiet:not(button) { display: none; }
     .sec { padding: 0 24px; width: 100%; }
     .sec.intro { bottom: 110px; width: 100%; }
-    .sec.zoom { bottom: 110px; left: 0; top: auto; transform: translateY( 14px ); width: 100%; }
-    .sec.zoom.on { transform: none; }
+    .sec.zoom { bottom: 110px; display: block; top: auto; }
+    .sec.zoom .head { padding-right: 0; }
     .sec h2 { margin: 12px 0 14px; }
     .rows { display: none; }
     #arrows { bottom: 72px; right: 24px; }
@@ -306,8 +311,11 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
     </section>
 
     <section class="sec zoom" data-i="1">
-        <span class="label">01 · The pipeline</span>
-        <h2>How a render is made.</h2>
+        <div class="head">
+            <span class="label">01 · The pipeline</span>
+            <h2>How a render is made.</h2>
+        </div>
+        <div class="body">
         <p>One script, five stages. The same neutral solid is carried through every stage so the effect of each step is visible in isolation.</p>
         <div class="rows">
             <div class="row"><b>01 Source</b><span>luminance, no processing</span></div>
@@ -316,43 +324,59 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
             <div class="row"><b>04 Contour</b><span>sharpened · 0.34 / 0.36</span></div>
             <div class="row"><b>05 Resolve</b><span>two layers · dormant blue, lit orange</span></div>
         </div>
+        </div>
     </section>
 
     <section class="sec zoom" data-i="2">
-        <span class="label">02 · Interpolation</span>
-        <h2>Fields, not pixels.</h2>
+        <div class="head">
+            <span class="label">02 · Interpolation</span>
+            <h2>Fields, not pixels.</h2>
+        </div>
+        <div class="body">
         <p>Two fields are mixed and a single contour is re-resolved, so the solid deforms. A crossfade would show both shapes at once. At t = 0.50 there is exactly one form on screen and it belongs to neither end.</p>
         <div class="rows">
             <div class="row"><b class="n">t = 0.00</b><span>source</span></div>
             <div class="row"><b class="n">t = 0.50</b><span><em>deformed</em> · one contour, no ghost</span></div>
             <div class="row"><b class="n">t = 1.00</b><span>target</span></div>
         </div>
+        </div>
     </section>
 
     <section class="sec zoom" data-i="3">
-        <span class="label">03 · Constants</span>
-        <h2>The constant is an asset.</h2>
+        <div class="head">
+            <span class="label">03 · Constants</span>
+            <h2>The constant is an asset.</h2>
+        </div>
+        <div class="body">
         <p>Each value holds everything else fixed. Too little blur and the contour is jagged with no gradient to morph; too much and strokes fuse. The shipped setting is a published style, not a number someone remembers.</p>
         <div class="rows">
             <div class="row ship"><b class="n">blur 0.75</b><span>0.0 none · <em>0.75</em> · 1.15 welded</span></div>
             <div class="row ship"><b class="n">threshold 0.34</b><span>0.18 fat · <em>0.34</em> · 0.52 skeletal</span></div>
             <div class="row ship"><b class="n">cell 0.62</b><span>leading ÷ size · at 1.00 glyphs shear 1.67×</span></div>
         </div>
+        </div>
     </section>
 
     <section class="sec zoom" data-i="4">
-        <span class="label">04 · Two-tone</span>
-        <h2>The field is never one colour.</h2>
+        <div class="head">
+            <span class="label">04 · Two-tone</span>
+            <h2>The field is never one colour.</h2>
+        </div>
+        <div class="body">
         <p>A resolved render is split into two layers over the same grid. Cells inside the attention region go to the lit layer; everything else stays dormant. Two layers, not per-character colouring, so there can only ever be one lit region. The rule is enforced by structure, not discipline.</p>
         <div class="rows">
             <div class="row"><b class="n">field/dormant</b><span><i style="background:#0074E0"></i><i style="background:#99CFF7"></i>recedes · blue-400 light, blue-100 dark</span></div>
             <div class="row"><b class="n">field/lit</b><span><i style="background:#FB550E"></i>advances · signal-400 in both modes</span></div>
         </div>
+        </div>
     </section>
 
     <section class="sec zoom" data-i="5">
-        <span class="label">05 · The type family</span>
-        <h2>The alphabet is the same transformation as the mark.</h2>
+        <div class="head">
+            <span class="label">05 · The type family</span>
+            <h2>The alphabet is the same transformation as the mark.</h2>
+        </div>
+        <div class="body">
         <p>Archivo Bold through the same five stages as any other source, one glyph at a time, against one baseline. Cap height is the size axis: inside a field the font size never changes, so density carries the value. A title face and a mark. Never a reading face.</p>
         <div class="rows">
             <div class="row"><b>cap</b><span><em>C</em> · the size axis, set this and nothing else</span></div>
@@ -361,17 +385,22 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
             <div class="row"><b>descender</b><span>0.36 C</span></div>
             <div class="row"><b>cell</b><span>0.60 × 0.62 · square on the page</span></div>
         </div>
+        </div>
     </section>
 
     <section class="sec zoom" data-i="6">
-        <span class="label">06 · Tokens</span>
-        <h2>Roles. Aliased, never raw.</h2>
+        <div class="head">
+            <span class="label">06 · Tokens</span>
+            <h2>Roles. Aliased, never raw.</h2>
+        </div>
+        <div class="body">
         <p>Twenty-nine primitives, sixteen semantic roles. Designers apply only the roles. Each role points at a primitive per mode, so Dark is a mode switch rather than a second library. Toggle it in the corner: the whole page restyles.</p>
         <div class="rows">
             <div class="row"><b class="n">surface/ground</b><span><i style="background:#FFFFFF"></i>neutral/0 → <i style="background:#14100F"></i>neutral/700</span></div>
             <div class="row"><b class="n">text/primary</b><span><i style="background:#14100F"></i>neutral/700 → <i style="background:#FFFFFF"></i>neutral/0</span></div>
             <div class="row"><b class="n">accent/signal</b><span><i style="background:#FB550E"></i>signal/400 · both modes</span></div>
             <div class="row"><b class="n">field/dormant</b><span><i style="background:#0074E0"></i>field/400 → <i style="background:#99CFF7"></i>field/100</span></div>
+        </div>
         </div>
     </section>
 </div>
@@ -536,9 +565,9 @@ function go( i, instant ) {
         const cx = ( b.c0 + b.c1 + 1 ) / 2 * cw, cy = ( b.r0 + b.r1 + 1 ) / 2 * ch;
         const s = narrow
             ? clamp( Math.min( W * 0.9 / bw, H * 0.4 / bh ), 1.5, 14 )
-            : clamp( Math.min( W * 0.78 / bw, H * 0.5 / bh ), 1.5, 14 );
-        const tx = W * 0.5 - s * cx;
-        const ty = ( narrow ? H * 0.32 : H * 0.45 ) - s * cy;
+            : clamp( Math.min( W * 0.44 / bw, H * 0.48 / bh ), 1.5, 14 );
+        const tx = ( narrow ? W * 0.5 : W * 0.29 ) - s * cx;
+        const ty = ( narrow ? H * 0.32 : H * 0.47 ) - s * cy;
         view = { tx: tx, ty: ty, sc: s * base };
         t = "translate(" + tx + "px, " + ty + "px) scale(" + ( s * base ) + ")";
         stage.classList.add( "zoomed" );
