@@ -780,13 +780,13 @@ function updateDecoders( now ) {
         let out = "", done = true;
         for ( let i = 0; i < d.text.length; i++ ) {
             const ch = d.text[ i ];
-            if ( ch === " " || ch === "\n" || el >= d.starts[ i ] ) out += ch;
-            else {
-                done = false;
-                out += SCRAMBLE[ hash( i, k, Math.floor( now / 55 ) ) % SCRAMBLE.length ];
-            }
+            if ( ch === " " || ch === "\n" ) { out += ch; continue; }
+            const p = smooth( 0, 0.45, el - d.starts[ i ] );
+            const shown = el >= d.starts[ i ] ? ch : SCRAMBLE[ hash( i, k, Math.floor( now / 55 ) ) % SCRAMBLE.length ];
+            if ( p < 1 ) done = false;
+            out += "<span style=\"opacity:" + ( 0.18 + 0.82 * p ).toFixed( 3 ) + ";color:color-mix( in srgb, var( --text ) " + Math.round( p * 100 ) + "%, var( --lit ) )\">" + shown.replace( "&", "&amp;" ).replace( "<", "&lt;" ).replace( ">", "&gt;" ) + "</span>";
         }
-        d.el.textContent = out;
+        d.el.innerHTML = out;
         if ( done ) { d.el.textContent = d.text; decoders.splice( k, 1 ); }
     }
 }
