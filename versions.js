@@ -1,6 +1,5 @@
 ( function() {
     const VERSIONS = [
-        { id: "v4", title: "Solid field", note: "Real 3D · extruded glyphs · fly-through camera · cursor orbit", path: "v4/" },
         { id: "v3", title: "Living field", note: "Cursor lens · ripples · decode transitions · wormhole zoom", path: "v3/" },
         { id: "v2", title: "Clickable field", note: "Words click to zoom · faded backdrop · heading fade-in", path: "v2/" },
         { id: "v1", title: "Original", note: "ASCII pipeline brand page", path: "v1/" }
