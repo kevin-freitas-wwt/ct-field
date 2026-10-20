@@ -412,6 +412,7 @@ button { background: none; border: 0; color: inherit; cursor: pointer; font: inh
 const COLS = 300;
 const RAMP = " .:-=+*#%@";
 const N = RAMP.length;
+const EDGE = 12;
 const SS = 6;
 const BLUR = 0.75;
 const THRESH = 0.34;
@@ -744,8 +745,13 @@ function draw( now, dt, t ) {
             let L = k >= 0 ? Math.max( lw[ k ], hw[ k ] ) : 0;
             if ( e > 0.25 ) L = Math.max( L, Math.min( 1, ( e - 0.25 ) * 2 ) );
             if ( scr ) L = Math.max( L, 0.8 );
-            const orA = Math.min( 1, Math.max( orBase + orWave * Math.sin( t * 1.4 + c * 0.05 ), e * 1.1, sw ) );
-            const blA = Math.min( 1, Math.max( dormA, e * 0.9, sw * 0.9 ) );
+            let ef = 1;
+            if ( zf > 0.01 && !( k >= 0 && lw[ k ] > 0.5 ) ) {
+                const ed = Math.min( smooth( 0, EDGE, r ), smooth( 0, EDGE, ROWS - 1 - r ), smooth( 0, EDGE, c ), smooth( 0, EDGE, COLS - 1 - c ) );
+                ef = lerp( 1, ed, zf );
+            }
+            const orA = ef * Math.min( 1, Math.max( orBase + orWave * Math.sin( t * 1.4 + c * 0.05 ), e * 1.1, sw ) );
+            const blA = ef * Math.min( 1, Math.max( dormA, e * 0.9, sw * 0.9 ) );
             const po = L > 0.5 ? 1 : 0.4;
             const x = c * cw + pdx * po, yy = y + pdy * po;
 
